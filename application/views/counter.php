@@ -8,21 +8,27 @@
 
 <div class="row" xmlns="http://www.w3.org/1999/html">
     <div class="small-6 medium-5 columns">
-        <select id="selectProduct">
-            <?php
-            foreach ($daftarProduk as $produk):
-                ?>
-                <option value="<?=$produk->id?>" data-price="<?=$produk->harga?>"><?=$produk->nama?> @ Rp <?=$produk->harga?></option>
+        <label>Produk
+            <select id="selectProduct">
                 <?php
-            endforeach;
-            ?>
-        </select>
+                foreach ($daftarProduk as $produk):
+                    ?>
+                    <option value="<?=$produk->id?>" data-price="<?=$produk->harga?>"><?=$produk->nama?> @ Rp <?=$produk->harga?></option>
+                    <?php
+                endforeach;
+                ?>
+            </select>
+        </label>
+    </div>
+    <div class="medium-2 column" style="max-width:100px">
+        <label>Jumlah
+            <input id="quantity" type="number" value="1" max="99">
+        </label>
     </div>
     <div class="medium-1 column">
-        <input id="quantity" type="number" value="1">
-    </div>
-    <div class="medium-1 column">
+        <label>&nbsp;
         <button id="add" type="button" class="button">Add</button>
+        </label>
     </div>
     <div class="columns"></div>
 </div>
@@ -81,12 +87,18 @@
                 $lastId = null;
                 foreach ($daftarPenjualan as $penjualan):
                     $no;
+                    $tanggalPenjualan;
                     $idPenjualan = $penjualan->id_penjualan;
                     if ($idPenjualan == $lastId)
+                    {
                         $no = '';
+                        $tanggalPenjualan = '';
+                    }
                     else
                     {
                         $no = $noUrut++;
+                        $tanggalPenjualan = $penjualan->tanggal_penjualan;
+
                         $lastId = $idPenjualan;
                     }
             ?>
@@ -95,7 +107,7 @@
                     <td><?=$penjualan->nama?></td>
                     <td>Rp <?=$penjualan->harga?></td>
                     <td><?=$penjualan->jumlah?></td>
-                    <td><?=$penjualan->tanggal_penjualan?></td>
+                    <td><?=$tanggalPenjualan?></td>
                 </tr>
             <?php
                 endforeach;

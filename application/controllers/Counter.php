@@ -42,6 +42,7 @@ class Counter extends CI_Controller
 		$content = $this->load->view('counter', $contentData, true);
 
 		$templateData = array(
+			'title' => 'Counter Warung BTI',
 			'content' => $content
 		);
 		$this->load->view('template', $templateData);
