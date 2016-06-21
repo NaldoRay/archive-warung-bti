@@ -35,23 +35,25 @@ class Counter_model extends CI_Model
 			->get($this->TABLE_PENJUALAN);
 
 		$result = $query->row();
-		if (is_null($result))
+		if (is_null($result) || is_null($result->id_next))
 			return 1;
 		else
-			return $result->id_next;
+			return ($result->id_next + 1);
 	}
 
 	public function getHistoryPenjualan ()
 	{
 		$query = $this->db
-			->order_by('tanggal_penjualan')
+			->order_by('id_penjualan desc')
 			->get('history_penjualan');
 		return $query->result();
 	}
 
 	public function getDaftarProduk()
 	{
-		$query = $this->db->get('produk');
+		$query = $this->db
+			->order_by('nama')
+			->get('produk');
 		return $query->result();
 	}
 }
