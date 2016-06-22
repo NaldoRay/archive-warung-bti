@@ -4,6 +4,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 class Counter_model extends CI_Model
 {
 	private $TABLE_PENJUALAN = 'penjualan';
+	private $VIEW_HISTORY_PENJUALAN = 'history_penjualan';
 
 	public function __construct ()
 	{
@@ -45,15 +46,29 @@ class Counter_model extends CI_Model
 	{
 		$query = $this->db
 			->order_by('id_penjualan desc')
-			->get('history_penjualan');
+			->get($this->VIEW_HISTORY_PENJUALAN);
 		return $query->result();
 	}
 
-	public function getDaftarProduk()
+	public function getDaftarProduk ()
 	{
 		$query = $this->db
 			->order_by('nama')
 			->get('produk');
 		return $query->result();
+	}
+
+	public function getRekapJumlahPenjualan ($dayInterval)
+	{
+		$dayInterval = $this->db->escape($dayInterval);
+		$query = $this->db
+			->select('nama, SUM(jumlah) AS jumlah')
+			->where('tanggal_penjualan BETWEEN (DATE_FORMAT(NOW(), \'%Y-%m-%d 00:00:00\') - interval '.$dayInterval.' day) AND NOW()', null, false)
+			->group_by('id_produk')
+			->order_by('nama')
+			->get($this->VIEW_HISTORY_PENJUALAN);
+
+		$result = $query->result();
+		return $result;
 	}
 }

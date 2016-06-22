@@ -47,4 +47,25 @@ class Counter extends CI_Controller
 		);
 		$this->load->view('template', $templateData);
 	}
+	
+	public function getRekapJumlahPenjualan()
+	{
+		$dayInterval = $this->input->get('interval');
+		$this->load->model('counter_model', 'counterModel');
+		$rekapJumlahPenjualan = $this->counterModel->getRekapJumlahPenjualan($dayInterval);
+
+		$response = array(
+			'success' => true,
+			'data' => $rekapJumlahPenjualan
+		);
+
+		if (isset($_SERVER['HTTP_ORIGIN']))
+		{
+			var_dump($_SERVER['HTTP_ORIGIN']);
+			header("Access-Control-Allow-Origin: {$_SERVER['HTTP_ORIGIN']}");
+		}
+		header('Content-type: application/json');
+		header('Cache-control: max-age=60');
+		echo json_encode($response);
+	}
 }

@@ -117,6 +117,12 @@
     </div>
 </div>
 
+<h3>Penjualan 30 Hari Terakhir</h3>
+<div class="row">
+    <canvas id="rekapJumlahChart" width="400" height="400"></canvas>
+</div>
+
+<script src="<?=base_url('assets/js/vendor/Chart.bundle.js')?>"></script>
 <script type="text/javascript">
     var totalHarga = 0;
 
@@ -146,10 +152,68 @@
             $("#formContent").append(row);
 
             totalHarga += subtotal;
-            $("#totalHarga").html(totalHarga);
+            $("#totalHarga").html("Rp " + totalHarga);
 
             $("#formContent").append('<input type="hidden" value="'+ selectedProduct.val() +'" name="product[]">');
             $("#formContent").append('<input type="hidden" value="'+ jumlah +'" name="quantity[]">');
         });
+
+        updateChartData();
     });
+    
+    function updateChartData()
+    {
+        $.get("<?=site_url('rekap-jumlah')?>", { interval: 30 },
+            function (response)
+            {
+                if (response.success)
+                {
+                    var labels = [];
+                    var sets = [];
+                    var colors = [];
+                    var rekap = response.data;
+                    rekap.forEach(function(produk)
+                    {
+                        labels[labels.length] = produk.nama;
+                        sets[sets.length] = produk.jumlah;
+                        colors[colors.length] = getRandomColor();
+                    });
+
+                    var data = {
+                        labels: labels,
+                        datasets: [{
+                            data: sets,
+                            backgroundColor: colors
+                        }]
+                    };
+                    var options = {
+                        responsive: true,
+                        maintainAspectRatio: false
+                    };
+
+                    var context = $("#rekapJumlahChart");
+                    // For a pie chart
+                    new Chart(context,{
+                        type: 'pie',
+                        data: data,
+                        options: options
+                    });
+                }
+            }, "json"
+        ).fail(function(e){
+            alert('error: ' + e.message);
+        });
+    }
+
+    function getRandomColor()
+    {
+        var letters = '0A1B2C3D4E5F6789';
+        var color = '#';
+        for (var i = 0; i < 6; i++ )
+        {
+            var r = Math.floor(Math.random() * 1000);
+            color += letters[r % 16];
+        }
+        return color;
+    }
 </script>
