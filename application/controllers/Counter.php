@@ -51,17 +51,50 @@ class Counter extends CI_Controller
 	public function getRekapJumlahPenjualan()
 	{
 		$dayInterval = $this->input->get('interval');
+		if (is_null($dayInterval) || $dayInterval == '' || !is_numeric($dayInterval))
+			$dayInterval = null;
+		else if ($dayInterval < 0)
+			$dayInterval = 0;
+
 		$this->load->model('counter_model', 'counterModel');
 		$rekapJumlahPenjualan = $this->counterModel->getRekapJumlahPenjualan($dayInterval);
 
 		$response = array(
-			'success' => true,
+			'error' => '',
 			'data' => $rekapJumlahPenjualan
 		);
 
 		if (isset($_SERVER['HTTP_ORIGIN']))
 		{
-			var_dump($_SERVER['HTTP_ORIGIN']);
+			header("Access-Control-Allow-Origin: {$_SERVER['HTTP_ORIGIN']}");
+		}
+		header('Content-type: application/json');
+		header('Cache-control: max-age=60');
+		echo json_encode($response);
+	}
+
+	public function getRekapTotalPendapatan()
+	{
+		$monthInterval = $this->input->get('interval');
+		if (empty($monthInterval) || !is_numeric($monthInterval) || $monthInterval == 0)
+		{
+			$rekapTotalPendapatan = array();
+			$error = 'Interval harus numerik';
+		}
+		else
+		{
+			$this->load->model('counter_model', 'counterModel');
+			$rekapTotalPendapatan = $this->counterModel->getRekapTotalPendapatan($monthInterval);
+			$error = '';
+		}
+
+		$response = array(
+			'error' => $error,
+			'data' => $rekapTotalPendapatan
+		);
+
+		if (isset($_SERVER['HTTP_ORIGIN']))
+		{
 			header("Access-Control-Allow-Origin: {$_SERVER['HTTP_ORIGIN']}");
 		}
 		header('Content-type: application/json');

@@ -4,6 +4,8 @@
  * Date: 6/21/2016
  * Time: 09:55
  */
+
+/** @var array $daftarPenjualan */
 ?>
 
 <div class="row" xmlns="http://www.w3.org/1999/html">
@@ -13,7 +15,7 @@
                 <?php
                 foreach ($daftarProduk as $produk):
                     ?>
-                    <option value="<?=$produk->id?>" data-price="<?=$produk->harga?>"><?=$produk->nama?> @ Rp <?=$produk->harga?></option>
+                    <option value="<?=$produk->id?>" data-price="<?=$produk->harga?>"><?=$produk->nama?> @ Rp <?=number_format($produk->harga)?></option>
                     <?php
                 endforeach;
                 ?>
@@ -43,13 +45,14 @@
                 <th width="150">Harga</th>
                 <th width="80">Jumlah</th>
                 <th width="200">Subtotal</th>
+                <th width="80">Delete</th>
             </tr>
         </thead>
         <tbody id="formContent"></tbody>
         <tfoot>
             <tr>
                 <td colspan="3">Total</td>
-                <td id="totalHarga"></td>
+                <td id="totalHarga" colspan="2"></td>
             </tr>
         </tfoot>
     </table>
@@ -74,10 +77,10 @@
         <table>
             <thead>
             <tr>
-                <th width="80">No</th>
+                <th width="80" class="align-center">No</th>
                 <th width="200">Nama</th>
-                <th width="150">Harga</th>
-                <th width="80">Jumlah</th>
+                <th width="150" class="align-right">Harga</th>
+                <th width="80" class="align-right">Jumlah</th>
                 <th>Tanggal</th>
             </tr>
             </thead>
@@ -103,10 +106,10 @@
                     }
             ?>
                 <tr>
-                    <td><?=$no?></td>
+                    <td class="align-center"><?=$no?></td>
                     <td><?=$penjualan->nama?></td>
-                    <td>Rp <?=$penjualan->harga?></td>
-                    <td><?=$penjualan->jumlah?></td>
+                    <td class="align-right">Rp <?=number_format($penjualan->harga)?></td>
+                    <td class="align-right"><?=$penjualan->jumlah?></td>
                     <td><?=$tanggalPenjualan?></td>
                 </tr>
             <?php
@@ -117,14 +120,35 @@
     </div>
 </div>
 
-<h3>Penjualan 30 Hari Terakhir</h3>
 <div class="row">
-    <canvas id="rekapJumlahChart" width="400" height="400"></canvas>
+    <h4>Rekap Penjualan</h4>
+    <select id="selectHistory">
+        <option value="0">Hari ini</option>
+        <option value="30">1 Bulan Terakhir</option>
+        <option value="90">3 Bulan Terakhir</option>
+        <option value="">Semua</option>
+    </select>
+</div>
+<div class="row">
+    <canvas id="chartRekapPenjualan" width="400" height="400"></canvas>
 </div>
 
-<script src="<?=base_url('assets/js/vendor/Chart.bundle.js')?>"></script>
+<br /><br />
+<div class="row">
+    <h4>Rekap Pendapatan</h4>
+</div>
+<div class="row">
+    <canvas id="chartRekapPendapatan" height="350" width="700"></canvas>
+</div>
+
+<script src="<?=base_url('assets/js/vendor/Chart.js')?>"></script>
 <script type="text/javascript">
+    var nextRowId = 0;
     var totalHarga = 0;
+    var chartRekapPenjualan;
+    var chartRekapPendapatan;
+
+    var months = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember' ];
 
     $(document).ready(function () {
         $("#quantity").numeric({ decimal: false, negative: false });
@@ -143,30 +167,53 @@
 
             var subtotal = hargaUnit * jumlah;
 
-            var row = "<tr>" +
+            var rowId = nextRowId++;
+            var row = '<tr id="buy-' + rowId + '">' +
                     "<td>" + name + "</td>" +
                     "<td>" + harga + "</td>" +
                     "<td>" + jumlah + "</td>" +
-                    "<td>Rp " + subtotal + "</td>" +
+                    "<td>Rp " + subtotal.toLocaleString() + "</td>" +
+                    '<td>' +
+                        '<button type="button" class="deleteButton alert button" onclick="deleteBuyRow(' + rowId + ',' + subtotal + ')">&#10006;</button>' +
+                    '</td>' +
                 "</tr>";
             $("#formContent").append(row);
 
             totalHarga += subtotal;
-            $("#totalHarga").html("Rp " + totalHarga);
+            $("#totalHarga").html("Rp " + totalHarga.toLocaleString());
 
-            $("#formContent").append('<input type="hidden" value="'+ selectedProduct.val() +'" name="product[]">');
-            $("#formContent").append('<input type="hidden" value="'+ jumlah +'" name="quantity[]">');
+            $("#formContent").append('<input id="product-' + rowId + '" type="hidden" value="'+ selectedProduct.val() +'" name="product[]">');
+            $("#formContent").append('<input id="quantity-' + rowId + '" type="hidden" value="'+ jumlah +'" name="quantity[]">');
         });
 
-        updateChartData();
+        $("#selectHistory").on('change keyup', function() {
+            var interval = $(this).val();
+            updateChartPenjualan(interval);
+        });
+
+        $("#selectHistory").change();
+        updateChartPendapatan(3);
     });
-    
-    function updateChartData()
+
+    function deleteBuyRow (rowId, subtotal)
     {
-        $.get("<?=site_url('rekap-jumlah')?>", { interval: 30 },
+        var tr = $("#buy-" + rowId);
+        tr.fadeOut(500, function() {
+            tr.remove();
+            $("#product-" + rowId).remove();
+            $("#quantity-" + rowId).remove();
+
+            totalHarga -= subtotal;
+            $("#totalHarga").html("Rp " + totalHarga.toLocaleString());
+        });
+    }
+    
+    function updateChartPenjualan (interval)
+    {
+        $.get("<?=site_url('rekap-penjualan')?>", { interval: interval },
             function (response)
             {
-                if (response.success)
+                if (response.error.length == 0)
                 {
                     var labels = [];
                     var sets = [];
@@ -186,18 +233,114 @@
                             backgroundColor: colors
                         }]
                     };
+
+                    if (chartRekapPenjualan !== undefined)
+                        chartRekapPenjualan.destroy();
+
+                    var context = $("#chartRekapPenjualan");
                     var options = {
                         responsive: true,
                         maintainAspectRatio: false
                     };
-
-                    var context = $("#rekapJumlahChart");
-                    // For a pie chart
-                    new Chart(context,{
-                        type: 'pie',
+                    chartRekapPenjualan = new Chart(context, {
+                        type: 'doughnut',
                         data: data,
                         options: options
                     });
+                }
+                else
+                {
+                    alert(response.error);
+                }
+            }, "json"
+        ).fail(function(e){
+            alert('error: ' + e.message);
+        });
+    }
+
+    function updateChartPendapatan (interval)
+    {
+        $.get("<?=site_url('rekap-pendapatan')?>", { interval: interval },
+            function (response)
+            {
+                if (response.error.length == 0)
+                {
+                    var labels = [];
+                    var sets = [];
+
+                    var rekap = response.data;
+                    var i = 0;
+                    rekap.forEach(function(pendapatan)
+                    {
+                        var idx = rekap.length-i;
+                        labels[idx] = months[pendapatan.month];
+                        sets[idx] = pendapatan.total;
+                        i++;
+                    });
+
+                    var data = {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Pendapatan 3 bulan terakhir',
+                            fill: false,
+                            lineTension: 0,
+                            backgroundColor: "rgba(75,192,192,0.4)",
+                            borderColor: "rgba(75,192,192,1)",
+                            borderCapStyle: 'butt',
+                            borderDash: [],
+                            borderDashOffset: 0.0,
+                            borderJoinStyle: 'miter',
+                            pointBorderColor: "rgba(75,192,192,1)",
+                            pointBackgroundColor: "#fff",
+                            pointBorderWidth: 1,
+                            pointHoverRadius: 5,
+                            pointHoverBackgroundColor: "rgba(75,192,192,1)",
+                            pointHoverBorderColor: "rgba(220,220,220,1)",
+                            pointHoverBorderWidth: 2,
+                            pointRadius: 1,
+                            pointHitRadius: 10,
+                            data: sets
+                        }]
+                    };
+
+                    if (chartRekapPendapatan !== undefined)
+                        chartRekapPendapatan.destroy();
+
+                    var context = $("#chartRekapPendapatan");
+                    var options = {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            yAxes: [{
+                                ticks: {
+                                    // Create scientific notation labels
+                                    callback: function(value) {
+                                        return "Rp " + value.toLocaleString();
+                                    }
+                                }
+                            }]
+                        },
+                        tooltips: {
+                            callbacks: {
+                                title: function(tooltipItems, data) {
+                                    return 'Pendapatan bulanan';
+                                },
+                                label: function(tooltipItem, data) {
+                                    return tooltipItem.xLabel + ' - Rp ' + tooltipItem.yLabel.toLocaleString();
+                                }
+                            }
+                        }
+                    };
+                    chartRekapPendapatan = new Chart(context, {
+                        type: 'line',
+                        data: data,
+                        options: options
+                    });
+                    Chart.defaults.global.title.callbacks
+                }
+                else
+                {
+                    alert(response.error);
                 }
             }, "json"
         ).fail(function(e){
@@ -209,10 +352,12 @@
     {
         var letters = '0A1B2C3D4E5F6789';
         var color = '#';
+        var r = 0;
         for (var i = 0; i < 6; i++ )
         {
-            var r = Math.floor(Math.random() * 1000);
-            color += letters[r % 16];
+            r += Math.floor(Math.random() * 1000);
+            var idx = r % letters.length;
+            color += letters[idx];
         }
         return color;
     }

@@ -53,4 +53,5 @@ $route['default_controller'] = 'counter';
 $route['404_override'] = '';
 $route['translate_uri_dashes'] = FALSE;
 
-$route['rekap-jumlah'] = 'counter/getRekapJumlahPenjualan';
+$route['rekap-penjualan'] = 'counter/getRekapJumlahPenjualan';
+$route['rekap-pendapatan'] = 'counter/getRekapTotalPendapatan';

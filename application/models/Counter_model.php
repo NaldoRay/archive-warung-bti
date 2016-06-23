@@ -58,17 +58,52 @@ class Counter_model extends CI_Model
 		return $query->result();
 	}
 
-	public function getRekapJumlahPenjualan ($dayInterval)
+	public function getRekapJumlahPenjualan ($dayInterval = null)
 	{
-		$dayInterval = $this->db->escape($dayInterval);
-		$query = $this->db
-			->select('nama, SUM(jumlah) AS jumlah')
-			->where('tanggal_penjualan BETWEEN (DATE_FORMAT(NOW(), \'%Y-%m-%d 00:00:00\') - interval '.$dayInterval.' day) AND NOW()', null, false)
+		$query = $this->db->select('nama, SUM(jumlah) AS jumlah');
+		if (!is_null($dayInterval))
+		{
+			$dayInterval = $this->db->escape($dayInterval);
+			$where = "tanggal_penjualan BETWEEN DATE_FORMAT(DATE_SUB(NOW(), interval ".$dayInterval." day), '%Y-%m-%d 00:00:00') AND NOW()";
+			$query->where($where, null, false);
+		}
+
+		$result = $query
 			->group_by('id_produk')
 			->order_by('nama')
 			->get($this->VIEW_HISTORY_PENJUALAN);
 
-		$result = $query->result();
-		return $result;
+		return $result->result();
+	}
+
+	/**
+	 * @param $monthInterval
+	 * @return array
+	 */
+	public function getRekapTotalPendapatan ($monthInterval)
+	{
+		$rekapPendapatan = array();
+		for ($interval = 0; $interval <= $monthInterval; $interval++)
+		{
+			if ($interval > 0)
+			{
+				$from = "DATE_FORMAT(DATE_SUB(NOW(), interval ".$interval." month), '%Y-%m-01 00:00:00')";
+				$to = "DATE_FORMAT(DATE_SUB(NOW(), interval " . ($interval - 1) . " month), '%Y-%m-01 00:00:00')";
+			}
+			else
+			{
+				$from = "DATE_FORMAT(NOW(), '%Y-%m-01 00:00:00')";
+				$to = "NOW()";
+			}
+
+			$result = $this->db
+				->select('MONTH(NOW())-'.$interval.' AS month, IFNULL(SUM(total_harga), 0) AS total')
+				->where('tanggal BETWEEN '.$from.' AND '.$to, null, false)
+				->get('rekap_penjualan');
+
+			$rekapPendapatan[] = $result->row();
+		}
+
+		return $rekapPendapatan;
 	}
 }
