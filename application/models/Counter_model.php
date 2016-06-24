@@ -4,6 +4,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 class Counter_model extends CI_Model
 {
 	private $TABLE_PENJUALAN = 'penjualan';
+	private $TABLE_PRODUK = 'produk';
 	private $VIEW_HISTORY_PENJUALAN = 'history_penjualan';
 
 	public function __construct ()
@@ -15,6 +16,8 @@ class Counter_model extends CI_Model
 	public function add (array $products)
 	{
 		$nextId = $this->getNextId();
+
+		$this->db->trans_begin();
 		$data = array();
 		foreach ($products as $productId => $count)
 		{
@@ -23,10 +26,28 @@ class Counter_model extends CI_Model
 				'id_produk' => $productId,
 				'jumlah' => $count
 			);
+
+			$result = $this->db
+				->set('stok', 'stok-'.$count, false)
+				->where('stok >', 0)
+				->update($this->TABLE_PRODUK);
+
+			if (!$result || ($this->db->affected_rows() == 0))
+			{
+				$this->db->trans_rollback();
+				return false;
+			}
 		}
 
 		$result = $this->db->insert_batch($this->TABLE_PENJUALAN, $data);
-		return ($result !== false);
+
+		$success = $result && ($this->db->trans_status() !== false);
+		if ($success)
+			$this->db->trans_commit();
+		else
+			$this->db->trans_rollback();
+
+		return $success;
 	}
 
 	private function getNextId()
@@ -54,7 +75,7 @@ class Counter_model extends CI_Model
 	{
 		$query = $this->db
 			->order_by('nama')
-			->get('produk');
+			->get($this->TABLE_PRODUK);
 		return $query->result();
 	}
 

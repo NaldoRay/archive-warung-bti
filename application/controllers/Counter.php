@@ -7,6 +7,8 @@ class Counter extends CI_Controller
 	{
 		$this->load->model('counter_model', 'counterModel');
 
+		$messages = array();
+
 		$this->load->library('form_validation');
 		$this->form_validation->set_rules('product[]', 'Produk', 'required');
 		$this->form_validation->set_rules('quantity[]', 'Jumlah', 'required');
@@ -27,7 +29,15 @@ class Counter extends CI_Controller
 					$products[$productId] = $quantity;
 			}
 
-			$this->counterModel->add($products);
+			$success = $this->counterModel->add($products);
+
+			$message = array('error' => !$success);
+			if ($success)
+				$message['text'] = 'Sukses melakukan pembelian!';
+			else
+				$message['text'] = 'Gagal melakukan pembelian: stok kosong atau database error.';
+
+			$messages[] = $message;
 		}
 
 		$this->load->helper('form');
@@ -37,7 +47,8 @@ class Counter extends CI_Controller
 
 		$contentData = array(
 			'daftarProduk' => $daftarProduk,
-			'daftarPenjualan' => $daftarPenjualan
+			'daftarPenjualan' => $daftarPenjualan,
+			'messages' => $messages
 		);
 		$content = $this->load->view('counter', $contentData, true);
 

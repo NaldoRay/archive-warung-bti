@@ -5,18 +5,63 @@
  * Time: 09:55
  */
 
-/** @var array $daftarPenjualan */
-?>
+    /** @var array $daftarProduk */
+    /** @var array $daftarPenjualan */
+    $daftarAlertProduk = array();
+    foreach ($daftarProduk as $produk)
+    {
+        if ($produk->stok < 3)
+            $daftarAlertProduk[] = $produk;
+    }
 
-<div class="row" xmlns="http://www.w3.org/1999/html">
+    if (!empty($daftarAlertProduk)):
+?>
+    <div class="row">
+        <div class="medium-12 columns">
+        <div class="alert callout">
+            Stok barang berikut sudah (mulai) habis:
+            <ul>
+                <?php
+                    foreach ($daftarAlertProduk as $produk)
+                        echo '<li>'.$produk->nama.' (Stok: '.$produk->stok.')</li>';
+                ?>
+            </ul>
+        </div>
+        </div>
+    </div>
+<?php
+    endif;
+
+    if (!empty($messages)):
+?>
+    <div class="row">
+        <div class="medium-12 columns">
+<?php
+        foreach ($messages as $message):
+?>
+    <div class="<?=$message['error'] ? 'alert' : 'success'?> callout" data-closable="slide-out-right">
+        <p><?=$message['text']?></p>
+        <button class="close-button" aria-label="Dismiss alert" type="button" data-close>
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+<?php
+        endforeach;
+?>
+        </div>
+    </div>
+<?php
+    endif;
+?>
+<div class="row">
     <div class="small-6 medium-5 columns">
         <label>Produk
             <select id="selectProduct">
                 <?php
                 foreach ($daftarProduk as $produk):
-                    ?>
-                    <option value="<?=$produk->id?>" data-price="<?=$produk->harga?>"><?=$produk->nama?> @ Rp <?=number_format($produk->harga)?></option>
-                    <?php
+                ?>
+                    <option value="<?=$produk->id?>" data-price="<?=$produk->harga?>"><?=$produk->nama?> @ Rp <?=number_format($produk->harga)?> (Stok: <?=$produk->stok?>)</option>
+                <?php
                 endforeach;
                 ?>
             </select>
