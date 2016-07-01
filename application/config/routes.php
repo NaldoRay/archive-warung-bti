@@ -55,3 +55,6 @@ $route['translate_uri_dashes'] = FALSE;
 
 $route['rekap-penjualan'] = 'counter/getRekapJumlahPenjualan';
 $route['rekap-pendapatan'] = 'counter/getRekapTotalPendapatan';
+
+$route['admin/produk/add'] = 'admin/addProduk';
+$route['admin/produk/update'] = 'admin/updateStokProduk';

@@ -13,7 +13,7 @@ class Counter_model extends CI_Model
 		$this->load->database();
 	}
 
-	public function add (array $products)
+	public function addPenjualan (array $products)
 	{
 		$nextId = $this->getNextId();
 
@@ -126,5 +126,40 @@ class Counter_model extends CI_Model
 		}
 
 		return $rekapPendapatan;
+	}
+
+	public function addProduk ($nama, $harga, $stok)
+	{
+		$data = array(
+			'nama' => $nama,
+			'harga' => $harga,
+			'stok' => $stok
+		);
+		$result = $this->db->insert($this->TABLE_PRODUK, $data);
+		return $result;
+	}
+
+	public function updateStokProduk ($products)
+	{
+		$data = array();
+		foreach ($products as $product)
+		{
+			$data[] = array(
+				'id' => $product[0],
+				'harga' => $product[1],
+				'stok' => $product[2]
+			);
+		}
+		$result = $this->db->update_batch($this->TABLE_PRODUK, $data, 'id');
+		return ($result !== FALSE);
+	}
+
+	private function hasProduk ($idProduk)
+	{
+		$result = $this->db
+			->where('id', $idProduk)
+			->get($this->TABLE_PRODUK);
+
+		return ($result->num_rows() > 0);
 	}
 }

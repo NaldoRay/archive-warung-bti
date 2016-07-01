@@ -29,7 +29,7 @@ class Counter extends CI_Controller
 					$products[$productId] = $quantity;
 			}
 
-			$success = $this->counterModel->add($products);
+			$success = $this->counterModel->addPenjualan($products);
 
 			$message = array('error' => !$success);
 			if ($success)
